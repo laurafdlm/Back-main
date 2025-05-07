@@ -151,13 +151,14 @@ public class UserController {
 	@GetMapping("/validate-token")
 	public ResponseEntity<?> validateToken(@RequestParam String token) {
 	    Optional<User> user = userRepository.findByToken(token);
-	    if (!user.isPresent() || userService.isTokenExpired(user.get())) { // Validar si el token ha expirado
+	    if (!user.isPresent() || userService.isTokenExpired(user.get())) {
 	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido o expirado.");
 	    }
 	    Map<String, String> response = new HashMap<>();
 	    response.put("message", "Token válido.");
 	    return ResponseEntity.ok(response);
 	}
+
 
 
 
@@ -283,7 +284,10 @@ public class UserController {
 	        userService.save(user);
 	        System.out.println("Usuario actualizado: " + user.getEmail() + ", isPaid: " + user.getIsPaid());
 
-	        return ResponseEntity.ok("Pago exitoso");
+	        Map<String, String> response = new HashMap<>();
+	        response.put("clientSecret", intent.getClientSecret());
+	        return ResponseEntity.ok(response);
+
 	    } catch (StripeException e) {
 	        System.err.println("Error en el pago: " + e.getMessage());
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error en el pago: " + e.getMessage());

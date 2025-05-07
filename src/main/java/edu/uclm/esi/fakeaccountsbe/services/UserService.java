@@ -65,7 +65,9 @@ public class UserService {
 
 	    String recoveryToken = java.util.UUID.randomUUID().toString();
 	    user.setToken(recoveryToken);
+	    user.setTokenExpiry(System.currentTimeMillis() + 3600000); // 1 hora de validez
 	    userRepository.save(user);
+
 
 	    String recoveryUrl = "http://localhost:4200/reset-password?token=" + recoveryToken;
 
