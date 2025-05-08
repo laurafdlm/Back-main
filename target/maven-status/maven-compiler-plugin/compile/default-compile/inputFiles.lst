@@ -4,11 +4,13 @@ C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fake
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\security\WebSecurityConfig.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\repositories\UserRepository.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\WebConfig.java
+C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\config\WebSocketConfig.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\http\UserController.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\security\AuthTokenFilter.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\exceptions\UserAlreadyExistsException.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\services\UserService.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\exceptions\GlobalExceptionHandler.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\model\User.java
+C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\http\NotificationController.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\model\CredencialesRegistro.java
 C:\Users\LauraFernandez\Documents\back\Back-main\src\main\java\edu\uclm\esi\fakeaccountsbe\model\PaymentRequest.java
