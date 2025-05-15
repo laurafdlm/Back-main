@@ -47,8 +47,8 @@ public class TestCrearLista {
 
         // Ir a login
         wait.until(ExpectedConditions.presenceOfElementLocated(By.linkText("Iniciar Sesión"))).click();
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("email"))).sendKeys("testselenium@uclm.com");
-        driver.findElement(By.id("password")).sendKeys("Test1234");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("email"))).sendKeys("laurafernandezdm@gmail.com");
+        driver.findElement(By.id("password")).sendKeys("1234");
         driver.findElement(By.xpath("//button[contains(text(),'Iniciar Sesión')]")).click();
 
         // Ir a /lists

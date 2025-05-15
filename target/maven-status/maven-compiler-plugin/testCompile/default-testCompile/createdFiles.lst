@@ -1,0 +1,4 @@
+edu\uclm\esi\fakeaccountsbe\tests\TestLoginUsuario.class
+edu\uclm\esi\fakeaccountsbe\tests\TestCrearLista.class
+edu\uclm\esi\fakeaccountsbe\tests\TestRegistroLogin.class
+edu\uclm\esi\fakeaccountsbe\tests\TestCrearListaYAgregarProducto.class
