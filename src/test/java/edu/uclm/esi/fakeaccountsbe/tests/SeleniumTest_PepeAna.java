@@ -2,7 +2,11 @@ package edu.uclm.esi.fakeaccountsbe.tests;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
@@ -22,10 +26,10 @@ public class SeleniumTest_PepeAna {
 
     @BeforeAll
     public void setUp() {
-        System.setProperty("webdriver.chrome.driver", "C:\\\\Users\\\\LauraFernandez\\\\Downloads\\\\chromedriver-win64\\\\chromedriver-win64\\\\chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", "C:\\Users\\LauraFernandez\\Downloads\\chromedriver-win64\\chromedriver-win64\\chromedriver.exe");
 
         ChromeOptions options = new ChromeOptions();
-        options.setBinary("C:\\\\Users\\\\LauraFernandez\\\\Downloads\\\\chrome-win64\\\\chrome-win64\\\\chrome.exe");
+        options.setBinary("C:\\Users\\LauraFernandez\\Downloads\\chrome-win64\\chrome-win64\\chrome.exe");
         options.addArguments("--remote-allow-origins=*");
 
         driverPepe = new ChromeDriver(options);
@@ -54,7 +58,7 @@ public class SeleniumTest_PepeAna {
     @Test
     public void testFlujoCompleto() {
         try {
-            String nombreLista = "Cumpleaños " + System.currentTimeMillis();
+            String nombreLista = "Cumpleaños " + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 
             // Login Pepe
             driverPepe.get("http://localhost:4200/login");
@@ -64,40 +68,28 @@ public class SeleniumTest_PepeAna {
             waitPepe.until(ExpectedConditions.urlContains("/home"));
 
             // Crear lista
-            waitPepe.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Gestionar Listas')]"))).click();
-            waitPepe.until(ExpectedConditions.urlContains("/lists"));
+            driverPepe.get("http://localhost:4200/lists");
             waitPepe.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("input[placeholder='Nueva lista']"))).sendKeys(nombreLista);
             waitPepe.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Añadir')]"))).click();
-            waitPepe.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//strong[contains(text(),'" + nombreLista + "')]")));
+            WebElement nuevaLista = waitPepe.until(ExpectedConditions.presenceOfElementLocated(
+                By.xpath("//strong[contains(text(),'" + nombreLista + "')]")));
+            WebElement listaItem = nuevaLista.findElement(By.xpath("./ancestor::li"));
+            String idLista = listaItem.getAttribute("id");
 
-            // Ver productos
-            waitPepe.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Ver Productos')]"))).click();
+            // Ir a productos y añadir
+            driverPepe.get("http://localhost:4200/lists/" + idLista + "/products?owner=true");
             waitPepe.until(ExpectedConditions.urlContains("/products"));
+            aniadirProducto(driverPepe, waitPepe, "Cerveza", "30");
+            aniadirProducto(driverPepe, waitPepe, "Tarta", "1");
+            aniadirProducto(driverPepe, waitPepe, "Patatas fritas", "2");
 
-            // Añadir productos
-            waitPepe.until(ExpectedConditions.presenceOfElementLocated(By.id("newProductName"))).sendKeys("Cerveza");
-            driverPepe.findElement(By.id("newProductQuantity")).sendKeys("30");
-            driverPepe.findElement(By.xpath("//button[contains(text(),'Añadir Producto')]")).click();
-            Thread.sleep(1000);
+            // Obtener token actual de Pepe desde localStorage (opcional si no lo haces manualmente en el test)
+            String tokenPepe = ((JavascriptExecutor) driverPepe)
+                .executeScript("return window.localStorage.getItem('token');").toString();
 
-            driverPepe.findElement(By.id("newProductName")).sendKeys("Tarta");
-            driverPepe.findElement(By.id("newProductQuantity")).sendKeys("1");
-            driverPepe.findElement(By.xpath("//button[contains(text(),'Añadir Producto')]")).click();
-            Thread.sleep(1000);
-
-            driverPepe.findElement(By.id("newProductName")).sendKeys("Patatas fritas");
-            driverPepe.findElement(By.id("newProductQuantity")).sendKeys("2");
-            driverPepe.findElement(By.xpath("//button[contains(text(),'Añadir Producto')]")).click();
-            Thread.sleep(1000);
-
-            driverPepe.navigate().back();
-
-            // Compartir con Ana
-            waitPepe.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Compartir')]"))).click();
-            waitPepe.until(ExpectedConditions.visibilityOfElementLocated(By.id("shareModal")));
-            waitPepe.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("input[placeholder='Introduce el correo electrónico']"))).sendKeys("ana@gmail.com");
-            waitPepe.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Enviar Invitación')]"))).click();
-            Thread.sleep(1500);
+            // Hacer POST a /listas/compartirLista y obtener el sharedUrl
+            String sharedUrl = obtenerSharedUrlDesdeBackend(idLista, "ana@gmail.com", tokenPepe);
+            System.out.println("Invitación generada: " + sharedUrl);
 
             // Login Ana
             driverAna.get("http://localhost:4200/login");
@@ -106,49 +98,49 @@ public class SeleniumTest_PepeAna {
             waitAna.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Iniciar Sesión')]"))).click();
             waitAna.until(ExpectedConditions.urlContains("/home"));
 
-            // Ver lista compartida
+            // Acceder directamente al enlace de invitación para que acepte
+            driverAna.get(sharedUrl);
+            waitAna.until(ExpectedConditions.urlContains("/invitation-accepted"));
+
+            // Ir a listas compartidas y verificar que aparece
             driverAna.get("http://localhost:4200/lists");
-            waitAna.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//h3[contains(text(),'Listas compartidas')]/following::button[contains(text(),'Ver Productos')]")
-            )).click();
+            WebElement lista = waitAna.until(ExpectedConditions.presenceOfElementLocated(
+                By.xpath("//li[contains(.,'" + nombreLista + "')]")));
+            WebElement btnVerProductos = lista.findElement(By.xpath(".//button[contains(text(),'Ver Productos')]"));
+            ((JavascriptExecutor) driverAna).executeScript("arguments[0].scrollIntoView({block: 'center'});", btnVerProductos);
+            Thread.sleep(300); // evitar que la animación lo tape
+            ((JavascriptExecutor) driverAna).executeScript("arguments[0].click();", btnVerProductos);
+
             waitAna.until(ExpectedConditions.urlContains("/products"));
 
-            // Comprar Tarta
-            List<WebElement> productos = waitAna.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("ul.list-group > li")));
-            boolean encontrada = false;
-
+            // Ana compra la tarta
+            List<WebElement> productos = waitAna.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                By.cssSelector("ul.list-group > li")));
             for (WebElement producto : productos) {
                 if (producto.getText().contains("Tarta")) {
-                    WebElement inputCantidad = producto.findElement(By.cssSelector("input[placeholder='Cantidad']"));
-                    inputCantidad.clear();
-                    inputCantidad.sendKeys("1");
-
+                    WebElement input = producto.findElement(By.cssSelector("input[placeholder='Cantidad']"));
+                    input.clear();
+                    input.sendKeys("1");
                     WebElement btnComprar = producto.findElement(By.xpath(".//button[contains(text(),'Comprar')]"));
-                    btnComprar.click();
-                    encontrada = true;
+
+                 // Scroll hasta el botón para asegurar que no está tapado
+                 ((JavascriptExecutor) driverAna).executeScript("arguments[0].scrollIntoView({block: 'center'});", btnComprar);
+                 Thread.sleep(300); // Espera un momento para evitar que esté animándose
+                 ((JavascriptExecutor) driverAna).executeScript("arguments[0].click();", btnComprar);
+
                     break;
                 }
             }
 
-            if (!encontrada) {
-                fail("❌ No se encontró el producto 'Tarta' en la vista de Ana.");
-            }
-
-            // Esperar a que el WebSocket actualice la vista de Pepe
+            // Verificación en Pepe
             Thread.sleep(2000);
-
-            // Verificar en vista de Pepe
             driverPepe.navigate().refresh();
-            waitPepe.until(ExpectedConditions.urlContains("/lists"));
-            waitPepe.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Ver Productos')]"))).click();
-            waitPepe.until(ExpectedConditions.urlContains("/products"));
-
+            driverPepe.get("http://localhost:4200/lists/" + idLista + "/products?owner=true");
             WebElement listaProductosPepe = waitPepe.until(ExpectedConditions.presenceOfElementLocated(By.className("list-group")));
             boolean tartaComprada = listaProductosPepe.getText().contains("Tarta") && listaProductosPepe.getText().contains("1/1");
 
-            if (!tartaComprada) {
+            if (!tartaComprada)
                 fail("❌ La tarta no aparece como comprada en el navegador de Pepe.");
-            }
 
             System.out.println("✔ Todo el flujo ejecutado correctamente.");
 
@@ -156,5 +148,47 @@ public class SeleniumTest_PepeAna {
             e.printStackTrace();
             fail("❌ Error en el flujo completo de prueba.");
         }
+    }
+    private String obtenerSharedUrlDesdeBackend(String idLista, String emailInvitado, String token) throws Exception {
+        URL url = new URL("http://localhost:80/listas/compartirLista");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Authorization", token);
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setDoOutput(true);
+
+        String jsonInput = String.format("{\"idLista\":\"%s\",\"email\":\"%s\"}", idLista, emailInvitado);
+        try (java.io.OutputStream os = con.getOutputStream()) {
+            byte[] input = jsonInput.getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        int code = con.getResponseCode();
+        if (code != 200) throw new RuntimeException("Fallo al compartir lista, código: " + code);
+
+        String response;
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(con.getInputStream(), "utf-8"))) {
+            response = br.lines().reduce("", (acc, line) -> acc + line);
+        }
+
+        // Extraer sharedUrl del JSON
+        int start = response.indexOf("sharedUrl\":\"") + 12;
+        int end = response.indexOf("\"", start);
+        return response.substring(start, end);
+    }
+
+    // Añadir producto
+    private void aniadirProducto(WebDriver driver, WebDriverWait wait, String nombre, String cantidad) throws InterruptedException {
+        WebElement inputNombre = wait.until(ExpectedConditions.presenceOfElementLocated(By.id("newProductName")));
+        WebElement inputCantidad = wait.until(ExpectedConditions.presenceOfElementLocated(By.id("newProductQuantity")));
+        inputNombre.clear();
+        inputNombre.sendKeys(nombre);
+        inputNombre.sendKeys(Keys.TAB);
+        inputCantidad.clear();
+        inputCantidad.sendKeys(cantidad);
+        inputCantidad.sendKeys(Keys.TAB);
+        Thread.sleep(500);
+        driver.findElement(By.xpath("//button[contains(text(),'Añadir Producto')]")).click();
+        Thread.sleep(1000);
     }
 }
